@@ -1,0 +1,12 @@
+
+general.import = ["~/.config/alacritty/themes/themes/dracula_plus.toml"]
+[font]
+  normal.family = "MesloLGS NF"
+  normal.style = "Regular"
+  bold.family = "MesloLGS NF"
+  bold.style = "Bold"
+  italic.family = "MesloLGS NF"
+  italic.style = "Italic"
+  bold_italic.family = "MesloLGS NF"
+  bold_italic.style = "Bold Italic"
+  size = 14 # Replace with your preferred size

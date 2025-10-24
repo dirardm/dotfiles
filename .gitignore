@@ -1,0 +1,8 @@
+.local/share
+.cache
+.config/**/cache
+.config/**/sessions
+.config/**/logs
+.config/**/state
+.vim/plugged.backup/
+.vim/plugged/

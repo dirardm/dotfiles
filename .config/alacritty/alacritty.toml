@@ -1,0 +1,49 @@
+# Complete Alacritty TOML Configuration
+general.import = ["~/.config/alacritty/themes/themes/dracula_plus.toml"]
+[env]
+
+[colors.primary]
+background = '#0F111A'
+
+[window]
+dimensions = { columns = 120, lines = 35 }
+decorations = "full"
+opacity = 1
+dynamic_title = true
+padding = { x = 0, y = 0 }  # ← Set to zero to remove black borders
+
+
+[font]
+size = 18
+
+[font.normal]
+family = "MesloLGS NF"
+style = "Regular"
+
+[font.bold]
+family = "MesloLGS NF"
+style = "Bold"
+
+[font.italic]
+family = "MesloLGS NF"
+style = "Italic"
+
+[font.bold_italic]
+family = "MesloLGS NF"
+style = "Bold Italic"
+
+# Your existing configuration continues here...
+[selection]
+save_to_clipboard = true
+
+[mouse]
+hide_when_typing = false
+
+[keyboard]
+bindings = [
+  { key = "V", mods = "Command", action = "Paste" },
+  { key = "C", mods = "Command", action = "Copy" },
+  { key = "Equals", mods = "Command", action = "IncreaseFontSize" },
+  { key = "Minus", mods = "Command", action = "DecreaseFontSize" },
+  { key = "Key0", mods = "Command", action = "ResetFontSize" },
+]

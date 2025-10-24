@@ -1,0 +1,247 @@
+-- ========================================
+-- 🚀 Neovim Setup using Lazy.nvim (2025)
+-- Material Theme - WORKING VERSION
+-- ========================================
+
+-- Bootstrap Lazy.nvim (auto-install if missing)
+local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
+if not vim.loop.fs_stat(lazypath) then
+  vim.fn.system({
+    "git", "clone", "--filter=blob:none",
+    "https://github.com/folke/lazy.nvim.git",
+    "--branch=stable", -- latest stable release
+    lazypath,
+  })
+end
+vim.opt.rtp:prepend(lazypath)
+
+-- Add Mason bin path for tools like eslint_d
+local mason_bin = vim.fn.stdpath("data") .. "/mason/bin"
+vim.env.PATH = mason_bin .. ":" .. vim.env.PATH
+
+-- ========================================
+-- 📦 Plugin Setup
+-- ========================================
+require("lazy").setup({
+  -- Theme - Material (WORKING VERSION)
+  { 
+    "marko-cerovac/material.nvim",
+    lazy = false,
+    priority = 1000,
+    config = function()
+      -- Set global variables BEFORE requiring the module
+      vim.g.material_style = "deep ocean"
+      -- Load and setup the theme
+      local material = require("material")
+      material.setup({
+        -- Remove plugins configuration entirely
+        contrast = {
+          terminal = false,
+          sidebars = false,
+          floating_windows = false,
+          cursor_line = false,
+          non_current_windows = false,
+        },
+        styles = {
+          comments = { italic = true },
+          strings = { italic = true },
+          keywords = { italic = true },
+          functions = { bold = true },
+          variables = {},
+          operators = {},
+          types = { bold = true },
+        }
+      })
+      -- Apply the colorscheme
+      vim.cmd("colorscheme material")
+    end,
+  },
+
+  -- Treesitter
+  {
+    "nvim-treesitter/nvim-treesitter",
+    build = ":TSUpdate",
+  },
+
+  -- LSP & Mason
+  { "williamboman/mason.nvim",          build = ":MasonUpdate" },
+  { "williamboman/mason-lspconfig.nvim" },
+
+  -- Formatting (lightweight alternative to none-ls)
+  { "stevearc/conform.nvim" },
+
+  -- Status line
+  {
+    "nvim-lualine/lualine.nvim",
+    dependencies = { "nvim-tree/nvim-web-devicons" },
+    config = function()
+      -- Cache for geolocation
+      local cached_location = "📍 Fetching..."
+      local last_location_update = 0
+      local location_cache_time = 300 -- 5 minutes in seconds
+
+      local function geolocation()
+        local current_time = os.time()
+        if current_time - last_location_update > location_cache_time then
+          last_location_update = current_time
+          
+          local handle = io.popen('curl -s --max-time 2 "http://ip-api.com/json/?fields=city,country" 2>/dev/null')
+          if handle then
+            local result = handle:read("*a")
+            handle:close()
+            if result and result ~= "" then
+              local ok, data = pcall(vim.fn.json_decode, result)
+              if ok and data and data.city and data.country then
+                -- Get current time in 12-hour format with AM/PM
+                local time_string = os.date("%A %d %b %Y | %I:%M %p")
+                -- Combine location and time with icons and separator
+                cached_location = "📍"..data.city .."," .. data.country .."   "..time_string
+              else
+                cached_location = "📍 Unknown location   |    " .. os.date("%I:%M %p")
+              end
+            else
+              cached_location = "📍 Fetching...   |    " .. os.date("%I:%M %p")
+            end
+          else
+            cached_location = "📍 Connection failed   |    " .. os.date("%I:%M %p")
+          end
+        end
+        return cached_location
+      end
+
+      require('lualine').setup({
+        options = {
+          icons_enabled = true,
+          theme = 'auto',
+          component_separators = { left = '', right = '' },
+          section_separators = { left = '', right = '' },
+          disabled_filetypes = {
+            statusline = {},
+            winbar = {},
+          },
+          ignore_focus = {},
+          always_divide_middle = true,
+          globalstatus = false,
+          refresh = {
+            statusline = 5000,
+            tabline = 1000,
+            winbar = 1000,
+          }
+        },
+        sections = {
+          lualine_a = { 'mode' },
+          lualine_b = {'branch', 'diff', 'diagnostics'},
+          lualine_c = {geolocation},
+          lualine_x = {'encoding', 'fileformat', 'filetype', 'filename'},
+          lualine_y = {'progress'},
+          lualine_z = {}
+        },
+        inactive_sections = {
+          lualine_a = {},
+          lualine_b = {},
+          lualine_c = {'filename'},
+          lualine_x = {},
+          lualine_y = {},
+          lualine_z = {}
+        },
+        tabline = {},
+        winbar = {},
+        inactive_winbar = {},
+        extensions = {}
+      })
+    end,
+  },
+})
+
+-- ========================================
+-- ⚙️ Plugin Configurations
+-- ========================================
+
+-- Common on_attach function
+local on_attach = function(client, bufnr)
+  -- Enable completion triggered by <c-x><c-o>
+  vim.api.nvim_buf_set_option(bufnr, 'omnifunc', 'v:lua.vim.lsp.omnifunc')
+
+  -- Mappings.
+  local opts = { buffer = bufnr }
+  vim.keymap.set('n', 'gD', vim.lsp.buf.declaration, opts)
+  vim.keymap.set('n', 'gd', vim.lsp.buf.definition, opts)
+  vim.keymap.set('n', 'K', vim.lsp.buf.hover, opts)
+  vim.keymap.set('n', 'gi', vim.lsp.buf.implementation, opts)
+  vim.keymap.set('n', '<C-k>', vim.lsp.buf.signature_help, opts)
+  vim.keymap.set('n', '<space>wa', vim.lsp.buf.add_workspace_folder, opts)
+  vim.keymap.set('n', '<space>wr', vim.lsp.buf.remove_workspace_folder, opts)
+  vim.keymap.set('n', '<space>wl', function()
+    print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
+  end, opts)
+  vim.keymap.set('n', '<space>D', vim.lsp.buf.type_definition, opts)
+  vim.keymap.set('n', '<space>rn', vim.lsp.buf.rename, opts)
+  vim.keymap.set('n', '<space>ca', vim.lsp.buf.code_action, opts)
+  vim.keymap.set('n', 'gr', vim.lsp.buf.references, opts)
+end
+
+-- Configure LSP servers using the new vim.lsp.config API
+vim.lsp.config('lua_ls', {
+  on_attach = on_attach,
+  settings = {
+    Lua = {
+      runtime = {
+        version = 'LuaJIT',
+      },
+      diagnostics = {
+        globals = {
+          'vim',
+          'require',
+        },
+      },
+    },
+  },
+})
+
+vim.lsp.config('ts_ls', {
+  on_attach = on_attach,
+})
+
+vim.lsp.config('pyright', {
+  on_attach = on_attach,
+})
+
+-- Mason setup with new API
+require("mason").setup()
+require("mason-lspconfig").setup({
+  ensure_installed = { "lua_ls", "ts_ls", "pyright" },
+  automatic_enable = true,
+})
+
+-- Treesitter setup
+require("nvim-treesitter.configs").setup({
+  ensure_installed = { "lua", "javascript", "typescript", "python", "bash", "json" },
+  highlight = { enable = true },
+  indent = { enable = true },
+})
+
+-- Conform (formatter)
+require("conform").setup({
+  formatters_by_ft = {
+    javascript = { "eslint_d", "prettierd" },
+    typescript = { "eslint_d", "prettierd" },
+    lua = { "stylua" },
+    python = { "black" },
+  },
+  format_on_save = { timeout_ms = 3000, lsp_fallback = true },
+})
+
+-- ========================================
+-- ✅ General Settings
+-- ========================================
+vim.opt.number = true
+vim.opt.relativenumber = true
+vim.opt.termguicolors = true
+vim.opt.expandtab = true
+vim.opt.shiftwidth = 2
+vim.opt.tabstop = 2
+vim.opt.smartindent = true
+vim.opt.clipboard = "unnamedplus"
+vim.cmd('highlight Normal guibg=NONE')
+
+print("✅ Neovim + Material Theme loaded successfully!")

@@ -1,0 +1,6 @@
+[credential]
+	helper = store
+[init]
+	defaultBranch = main
+[core]
+	excludesfile = /Users/dirard/.dotfilesignore
